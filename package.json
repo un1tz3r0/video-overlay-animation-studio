@@ -11,6 +11,7 @@
     "deploy:pages": "node scripts/deploy-pages.mjs",
     "deploy:cloudflare": "npx wrangler deploy --config deploy/wrangler.toml",
     "codepen": "node scripts/codepen.mjs > dist-codepen.html",
-    "deploy:gcloud": "gcloud app deploy dist --appyaml=deploy/app.yaml --project=$GCP_PROJECT"
+    "deploy:gcloud": "gcloud app deploy dist --appyaml=deploy/app.yaml --project=$GCP_PROJECT",
+    "package:desktop": "npm run build && python3 tools/appbundle/appbundle.py build dist/index.html dist/vendor -n \"Overlay Studio\" --windowed -o dist-desktop"
   }
 }
