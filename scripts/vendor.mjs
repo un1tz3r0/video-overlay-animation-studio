@@ -47,13 +47,15 @@ export function createVendor({ outDir, vendorDir, fetchImpl = fetch, log = () =>
     return r.startsWith('.') ? r : './' + r;
   };
 
-  // Vendor `url`, returns its path relative to outDir. `kind` is a hint: css|js|other
-  async function vendor(url) {
+  // Vendor `url`; resolves to its path relative to outDir. Concurrent requests for one URL share a fetch.
+  function vendor(url) {
     url = abs(url);
-    if (cache.has(url)) return cache.get(url);
+    if (!cache.has(url)) cache.set(url, fetchAndRewrite(url));
+    return cache.get(url);
+  }
+  async function fetchAndRewrite(url) {
     const { buf, type } = await fetchAsset(url);
     const rel = localName(url, type);
-    cache.set(url, rel);
     log(`vendored ${url} -> ${rel}`);
     let out = buf;
     const isCss = /css/.test(type) || rel.endsWith('.css');
@@ -107,8 +109,21 @@ export function createVendor({ outDir, vendorDir, fetchImpl = fetch, log = () =>
     out = await replaceAsync(out, /(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, async (m, a, body, c) =>
       a + await rewriteCssInline(body, htmlRel) + c);
     out = await replaceAsync(out, /(<script\b(?![^>]*\bsrc=)[^>]*>)([\s\S]*?)(<\/script>)/gi, async (m, a, body, c) =>
-      /type\s*=\s*["']?module/i.test(a) ? a + await rewriteInlineJs(body, htmlRel) + c : m);
+      /type\s*=\s*["']?module/i.test(a) ? a + await rewriteInlineJs(body, htmlRel) + c :
+      /type\s*=\s*["']?importmap/i.test(a) ? a + await rewriteImportMap(body, htmlRel) + c : m);
     return out;
+  }
+
+  // Import map values are module URLs; prefix mappings (ending in "/") cannot be vendored as one file and are kept.
+  async function rewriteImportMap(json, htmlRel) {
+    const map = JSON.parse(json);
+    const remap = async (table = {}) => {
+      for (const [k, u] of Object.entries(table))
+        if (isRemote(u) && !u.endsWith('/')) table[k] = relFrom(htmlRel, await vendor(u));
+    };
+    await remap(map.imports);
+    for (const table of Object.values(map.scopes ?? {})) await remap(table);
+    return '\n' + JSON.stringify(map, null, 2) + '\n';
   }
 
   const rewriteCssInline = (css, htmlRel) => rewriteCssRemoteOnly(css, htmlRel);
