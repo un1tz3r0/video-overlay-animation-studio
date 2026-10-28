@@ -1,0 +1,5 @@
+{
+  "sources": ["src/index.html"],
+  "outDir": "dist",
+  "vendorDir": "vendor"
+}

@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# build artifacts
+dist/
+.devcert.pem
+.devcert.key
+dist-codepen.html

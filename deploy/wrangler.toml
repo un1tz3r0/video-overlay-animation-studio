@@ -1,0 +1,6 @@
+# Cloudflare Workers static assets hosting. Run: npm run build && npm run deploy:cloudflare
+name = "video-overlay-animation-studio"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "../dist"

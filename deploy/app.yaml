@@ -1,0 +1,12 @@
+# Google App Engine static hosting; paths are relative to dist/.
+# Run: npm run build && GCP_PROJECT=<id> npm run deploy:gcloud
+runtime: python312
+handlers:
+  - url: /
+    static_files: index.html
+    upload: index.html
+    secure: always
+  - url: /(.*)
+    static_files: \1
+    upload: (.*)
+    secure: always
