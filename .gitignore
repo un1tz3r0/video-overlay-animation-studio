@@ -153,3 +153,4 @@ dist/
 .devcert.pem
 .devcert.key
 dist-codepen.html
+dist-desktop/
