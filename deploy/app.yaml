@@ -6,6 +6,11 @@ handlers:
     static_files: index.html
     upload: index.html
     secure: always
+  - url: /(.*\.mjs)
+    static_files: \1
+    upload: (.*\.mjs)
+    mime_type: text/javascript
+    secure: always
   - url: /(.*)
     static_files: \1
     upload: (.*)

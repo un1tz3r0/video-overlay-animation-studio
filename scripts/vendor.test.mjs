@@ -24,3 +24,15 @@ test('vendors css, fonts, and js modules with relative paths', async () => {
   const lib = [...v.files].find(([k]) => k.includes('lib.js'))[1].toString();
   assert.match(lib, /from "\.\/[0-9a-f]+-dep\.js"/);
 });
+
+test('rewrites import map entries and fetches each url once', async () => {
+  let gets = 0;
+  const counted = async (u) => { gets++; return fetchImpl(u); };
+  const v = createVendor({ outDir: 'x', vendorDir: 'vendor', fetchImpl: counted });
+  const out = await v.processHtml(`<script type="importmap">{ "imports": { "lib": "https://cdn.example.com/lib.js", "dir/": "https://cdn.example.com/dir/" } }</script>
+<script type="module">import a from "https://cdn.example.com/dep.js"; import b from "https://cdn.example.com/dep.js";</script>`, 'index.html');
+  const map = JSON.parse(out.match(/importmap">([\s\S]*?)<\/script>/)[1]);
+  assert.match(map.imports.lib, /^\.\/vendor\/cdn\.example\.com\/[0-9a-f]+-lib\.js$/);
+  assert.equal(map.imports['dir/'], 'https://cdn.example.com/dir/');
+  assert.equal(gets, 2);
+});
